@@ -1,0 +1,163 @@
+---
+title: "Dublin Airport Weather analysis"
+author: "Gladson Scaria"
+date: "08/11/2019"
+output: html_document
+---
+
+```{r global_options, include=FALSE, cache=FALSE}
+library(knitr)
+opts_chunk$set(echo = TRUE, 
+               warning = FALSE, 
+               message = FALSE,
+               cache = FALSE,
+               include = TRUE,
+               results = 'show',
+               error = TRUE,
+               fig.width = 9,
+               fig.height = 6,
+               fig.align = "center",
+               out.width = "80%")
+```
+
+## R Markdown
+
+```{r Assigment_stp_1}
+# extracting data from csv...
+DublinAirport<-read.csv("mly532.csv",header=TRUE,skip = 19,na.strings = "NA")
+# displaying structure of dataset
+str(DublinAirport)
+```
+
+```{r Assigment_stp_2}
+# using months.name to assign month name as per order
+DublinAirport$month <- factor(DublinAirport$month,level = 1:12,labels =  month.name)
+```
+
+```{r Assigment_stp_3}
+# storing the average rain as per month in a variable
+avg_rain <- aggregate(DublinAirport$rain,by=list(DublinAirport$month),mean)
+# Ordering the saved values in the order of average for each month
+ordr_rain <- avg_rain[order(avg_rain$x),]
+View(ordr_rain[1,1])
+View(ordr_rain[12,1])
+
+```
+On average February has the least rain and October has the highest rain
+
+```{r Assigment_stp_4}
+# creating columns for each month by using asigning label in the order of of months
+DublinAirport$Seasons <- factor(DublinAirport$month,level = month.name,labels =c('Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer','Autumn','Autumn','Autumn','Winter'))
+```
+```{r Assigment_stp_5}
+# assigning classes to DublinAirport
+class(DublinAirport) <- c('WeatherData','data.frame')
+```
+
+```{r Assigment_stp_6}
+summary.WeatherData <- function(fun){
+#  storing mean,sd,min,max for the required fields by first binding them on the basis of column Seasons
+ dat1=aggregate(cbind(rain,maxtp,mintp,maxgt)~ Seasons, data=fun, mean)
+ dat2=aggregate(cbind(rain,maxtp,mintp,maxgt)~ Seasons, data=fun, sd)
+ dat3=aggregate(cbind(rain,maxtp,mintp,maxgt)~ Seasons, data=fun, min)
+ dat4=aggregate(cbind(rain,maxtp,mintp,maxgt)~ Seasons, data=fun, max)
+
+ # Printing the the stored variables, using print.data.frame to keep the structure intact
+ print('Mean')
+ print.data.frame(dat1)
+ print('Standard deviation')
+ print.data.frame(dat2)
+ print('min')
+ print.data.frame(dat3)
+ print('max')
+ print.data.frame(dat4)
+ 
+
+}
+summary.WeatherData(DublinAirport)
+```
+
+```{r Assigment_stp_7}
+plot.WeatherData <- function(fun,period1=FALSE,period2=FALSE,p1=FALSE,p2=FALSE,p3=FALSE){
+  # handling scenario where both the years are given
+  if(period1!=FALSE&&period2!=FALSE){
+    period=c(period1:period2)
+  }
+  # handling scenario where only one year is mentioned
+  else if(period1!=FALSE&&period2==FALSE){
+    period=period1
+  }# handling scenario where only no year is mentioned
+  else {period=c(2015:2018)}
+  # extracting values from the passed dataframe according as per years recived 
+  small_set=fun[fun$year %in% period,]
+    
+  # when all 3 plots are required 
+  if((p1!=FALSE && p2!=FALSE && p3!=FALSE)||(p1==FALSE && p2==FALSE && p3==FALSE)){
+    
+    par(mfrow=c(1,3))
+    # Plot of the monthly Air Temperature
+    plot(small_set$month,small_set$maxtp,type = 'p',col='red' ,  xlab="Months",     ylab = "Air Temperature (C)", main = "Air Temperature")
+    par(new=TRUE)
+    plot(small_set$month,small_set$mintp,type = 'p',col= 'blue',axes = FALSE)
+    axis(side=4,at=pretty(range(small_set$mintp)))
+    legend('topleft',legend = c('maximum temperature','minimum temperature')       ,col = c('red','blue'),lty=1:2)  
+
+    # Plot of the Precipitation Amount
+    plot(small_set$year,small_set$rain,col=small_set$month,xlab = "Years", ylab     = "Precipitation Amount (mm)", main = "Precipitation Amount")
+    # Plot of the Highest Gust
+    plot(small_set$year,small_set$maxgt,col=small_set$month,xlab = "Years",        ylab = "Highest Gust (knot)", main = "Highest Gust")
+  }
+  else {
+    # when only first plot is required
+    if(p1!=FALSE && p2==FALSE && p3==FALSE){
+      plot(small_set$month,small_set$maxtp,type = 'p',col='red',xlab="Months",       ylab = "Air Temperature (C)", main = "Air Temperature" )
+      par(new=TRUE)
+      plot(small_set$month,small_set$mintp,type = 'p',col= 'blue',axes = FALSE)
+      axis(side=4,at=pretty(range(small_set$mintp)))
+      legend('topleft',legend = c('maximum temperature','minimum temperature')       ,col = c('red','blue'),lty=1:2) 
+    }
+    
+    # when first and second plot is required
+    if(p1!=FALSE && p2!=FALSE && p3==FALSE){
+      par(mfrow=c(1,2))
+      plot(small_set$month,small_set$maxtp,type = 'p',col='red', xlab="Months",       ylab = "Air Temperature (C)", main = "Air Temperature" ) 
+      par(new=TRUE)
+      plot(small_set$month,small_set$mintp,type = 'p',col= 'blue',axes = FALSE)
+      axis(side=4,at=pretty(range(small_set$mintp)))
+      legend('topleft',legend = c('maximum temperature','minimum temperature')       ,col = c('red','blue'),lty=1:2) 
+      
+      plot(small_set$year,small_set$rain,col=small_set$month,xlab = "Years",         ylab = "Precipitation Amount (mm)",  main = "Precipitation Amount")
+    }
+    # when first and third plot is required
+    else if(p1!=FALSE && p2==FALSE && p3!=FALSE){
+      par(mfrow=c(1,2))
+      plot(small_set$month,small_set$maxtp,type = 'p',col='red',xlab ="Months",       ylab = "Air Temperature (C)", main = "Air Temperature" )
+      par(new=TRUE)
+      plot(small_set$month,small_set$mintp,type = 'p',col= 'blue')
+      axis(side=4,at=pretty(range(small_set$mintp)))
+      legend('topleft',legend = c('maximum temperature','minimum temperature')       ,col = c('red','blue'),lty=1:2) 
+      
+      plot(small_set$year,small_set$maxgt,col=small_set$month,xlab = "Years",        ylab = "Highest Gust (knot)", main = "Highest Gust")
+    }
+    # when only second plot is required
+    if(p1==FALSE && p2!=FALSE && p3==FALSE ){
+      plot(small_set$year,small_set$rain,col=small_set$month,xlab = "Years",         ylab = "Precipitation Amount (mm)", main = "Precipitation Amount")
+    }
+    # when second and third plot is required
+    if(p1==FALSE && p2!=FALSE && p3!=FALSE ){
+      par(mfrow=c(1,2))
+      plot(small_set$year,small_set$rain,col=small_set$month,xlab = "Years",         ylab = "Precipitation Amount (mm)", main = "Precipitation Amount")
+      
+      plot(small_set$year,small_set$maxgt,col=small_set$month)
+    }
+    # when only third plot is required
+    if(p1==FALSE && p2==FALSE && p3!=FALSE)
+      {plot(small_set$year,small_set$maxgt,col=small_set$month,xlab = "Years",        ylab = "Highest Gust (knot)", main = "Highest Gust")}
+    }
+  
+}
+plot.WeatherData(DublinAirport,2012,2018,1)
+plot.WeatherData(DublinAirport)
+  
+
+```
